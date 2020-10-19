@@ -219,6 +219,13 @@ var BackgroundGeolocation = {
       'checkStatus')
   },
 
+  requestPermissions: function (success, failure) {
+    exec(success || emptyFnc,
+      failure || emptyFnc,
+      'BackgroundGeolocation',
+      'requestPermissions')
+  },
+
   startTask: function (success, failure) {
     exec(success || emptyFnc,
       failure || emptyFnc,
