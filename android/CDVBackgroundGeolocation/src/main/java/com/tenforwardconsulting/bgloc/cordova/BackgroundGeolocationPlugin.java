@@ -15,6 +15,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
+import com.github.jparkie.promise.Promise;
 import com.marianhello.bgloc.BackgroundGeolocationFacade;
 import com.marianhello.bgloc.Config;
 import com.marianhello.bgloc.PluginDelegate;
@@ -534,7 +535,21 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
     }
 
     private boolean requestPermissions() {
-      return facade.requestPermissions();
+      Promise<Boolean> promise = facade.requestPermissions();
+      try {
+        promise.await();
+        return promise.get();
+      } catch (InterruptedException e) {
+        logger.error("Interrupted while accept permissions", e);
+        Thread.currentThread().interrupt();
+        sendError(
+          new PluginException(
+            "Interrupted while waiting accept permissions",
+            PluginException.JSON_ERROR
+          )
+        );
+      }
+      return true;
     }
 
     @Override
