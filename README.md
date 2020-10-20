@@ -369,7 +369,7 @@ Check status of the service
 |----------------------------|-----------|------------------------------------------------------|
 | `isRunning`                | `Boolean` | true/false (true if service is running)              |
 | `locationServicesEnabled`  | `Boolean` | true/false (true if location services are enabled)   |
-| `shouldShowRequestBackgroundLocationPermissionRational` | `Boolean` | true/false (true if need rational permission) |
+| `shouldShowRequestBackgroundLocationPermissionRational` | `Boolean` | true/false (true if need rational permission. Android only.) |
 | `authorization`            | `Number`  | authorization status                                 |
 
 Authorization statuses:
@@ -381,6 +381,7 @@ Authorization statuses:
 Note: In the Android concept of authorization, these represent application permissions. Android returns AUTHORIZED when has foreground OR background permission.
 
 ### requestPermissions(success, fail)
+Platform: Android
 
 Request permission for plugin work correctly
 
