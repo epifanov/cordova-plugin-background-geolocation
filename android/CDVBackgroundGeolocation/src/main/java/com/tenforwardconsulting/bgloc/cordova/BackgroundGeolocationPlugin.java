@@ -15,6 +15,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
+import com.github.jparkie.promise.Promise;
 import com.marianhello.bgloc.BackgroundGeolocationFacade;
 import com.marianhello.bgloc.Config;
 import com.marianhello.bgloc.PluginDelegate;
@@ -65,6 +66,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
     public static final String ACTION_GET_CONFIG = "getConfig";
     public static final String ACTION_GET_LOG_ENTRIES = "getLogEntries";
     public static final String ACTION_CHECK_STATUS = "checkStatus";
+    public static final String ACTION_REQUEST_PERMISSIONS = "requestPermissions";
     public static final String ACTION_REGISTER_EVENT_LISTENER = "addEventListener";
     public static final String ACTION_START_TASK = "startTask";
     public static final String ACTION_END_TASK = "endTask";
@@ -132,7 +134,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
         super.pluginInitialize();
 
         logger = LoggerManager.getLogger(BackgroundGeolocationPlugin.class);
-        facade = new BackgroundGeolocationFacade(this.getContext(), this);
+        facade = new BackgroundGeolocationFacade(this.getActivity(), this.getContext(), this);
         facade.resume();
     }
 
@@ -330,6 +332,18 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
             });
 
             return true;
+        } else if (ACTION_REQUEST_PERMISSIONS.equals(action)) {
+          runOnWebViewThread(new Runnable() {
+            public void run() {
+              try {
+                requestPermissions();
+                callbackContext.success();
+              } catch (Exception e) {
+                callbackContext.sendPluginResult(ErrorPluginResult.from("Request permissions failed", e, PluginException.SERVICE_ERROR));
+              }
+            }
+          });
+          return true;
         } else if (ACTION_START_TASK.equals(action)) {
             callbackContext.success(1);
             return true;
@@ -361,7 +375,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
     /**
      * Called when the system is about to start resuming a previous activity.
      *
-     * @param multitasking		Flag indicating if multitasking is turned on for app
+     * @param multitasking      Flag indicating if multitasking is turned on for app
      */
     public void onPause(boolean multitasking) {
         logger.info("App will be paused multitasking={}", multitasking);
@@ -372,7 +386,7 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
     /**
      * Called when the activity will start interacting with the user.
      *
-     * @param multitasking		Flag indicating if multitasking is turned on for app
+     * @param multitasking      Flag indicating if multitasking is turned on for app
      */
     public void onResume(boolean multitasking) {
         logger.info("App will be resumed multitasking={}", multitasking);
@@ -511,11 +525,31 @@ public class BackgroundGeolocationPlugin extends CordovaPlugin implements Plugin
     private JSONObject checkStatus() throws JSONException, PluginException {
         JSONObject json = new JSONObject();
         json.put("isRunning", facade.isRunning());
-        json.put("hasPermissions", facade.hasPermissions()); //@Deprecated
         json.put("locationServicesEnabled", facade.locationServicesEnabled());
+        json.put(
+          "shouldShowRequestBackgroundLocationPermissionRational",
+          facade.shouldShowRequestBackgroundLocationPermissionRational()
+        );
         json.put("authorization", facade.getAuthorizationStatus());
-
         return json;
+    }
+
+    private boolean requestPermissions() {
+      Promise<Boolean> promise = facade.requestPermissions();
+      try {
+        promise.await();
+        return promise.get();
+      } catch (InterruptedException e) {
+        logger.error("Interrupted while accept permissions", e);
+        Thread.currentThread().interrupt();
+        sendError(
+          new PluginException(
+            "Interrupted while waiting accept permissions",
+            PluginException.JSON_ERROR
+          )
+        );
+      }
+      return true;
     }
 
     @Override

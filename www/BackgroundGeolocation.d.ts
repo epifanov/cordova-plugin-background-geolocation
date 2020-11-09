@@ -414,6 +414,9 @@ export interface ServiceStatus {
   /** TRUE if location services are enabled */
   locationServicesEnabled: boolean;
 
+  /** TRUE if need rational permission */
+  shouldShowRequestBackgroundLocationPermissionRational: boolean;
+
   /**
    * Authorization status.
    *
@@ -422,6 +425,8 @@ export interface ServiceStatus {
    *
    * @example
    * if (authorization == BackgroundGeolocation.NOT_AUTHORIZED) {...}
+   *
+   * On Android status AUTHORIZED when has foreground OR background permissions
    */
   authorization: AuthorizationStatus;
 }
@@ -547,6 +552,17 @@ export interface BackgroundGeolocationPlugin {
    */
   checkStatus(
     success: (status: ServiceStatus) => void,
+    fail?: (error: BackgroundGeolocationError) => void
+  ): void;
+
+  /**
+   * Request geolocation permissions
+   *
+   * @param success
+   * @param fail
+   */
+  requestPermissions(
+    success: () => void,
     fail?: (error: BackgroundGeolocationError) => void
   ): void;
 
